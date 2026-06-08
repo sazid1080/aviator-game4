@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✈️ ক্রাশ গেম - প্লেয়ার V2</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1a3e 50%, #0f0f2e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        h1 { 
+            text-align: center; 
+            color: #333; 
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: bold;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .game-area {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+        
+        .airplane {
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            font-size: 50px;
+        }
+        
+        .airplane.flying { animation: flyUp 10s linear forwards; }
+        .airplane.crashed { animation: crashDown 0.8s ease-in forwards; }
+        
+        @keyframes flyUp {
+            0% { left: 20px; bottom: 10px; }
+            100% { left: 350px; bottom: 80px; }
+        }
+        
+        @keyframes crashDown {
+            0% { }
+            100% { transform: rotate(90deg) translateY(80px); }
+        }
+        
+        .multiplier-display {
+            font-size: 60px;
+            font-weight: bold;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .balance-section {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .balance-amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .quick-bets {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .quick-bet-btn {
+            padding: 10px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .quick-bet-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        #playBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        #playBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        #cashOutBtn {
+            background: #28a745;
+            color: white;
+            display: none;
+        }
+        
+        .deposit-btn, .withdraw-btn {
+            background: #28a745;
+            color: white;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .message.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .stat-box {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-label { color: #666; font-size: 12px; margin-bottom: 5px; }
+        .stat-value { color: #667eea; font-size: 20px; font-weight: bold; }
+        
+        .payment-info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .payment-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+            word-break: break-all;
+        }
+        
+        .payment-method {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✈️ ক্রাশ গেম</h1>
+
+        <div id="message" class="message"></div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('game')">🎮 গেম</button>
+            <button class="tab-btn" onclick="switchTab('deposit')">💰 ডিপোজিট</button>
+            <button class="tab-btn" onclick="switchTab('withdraw')">💸 উইথড্র</button>
+        </div>
+
+        <!-- গেম ট্যাব -->
+        <div id="game" class="tab-content active">
+            <div class="game-area" id="gameArea">
+                <div class="airplane" id="airplane">✈️</div>
+                <div>
+                    <div class="multiplier-display" id="multiplierDisplay">1.00x</div>
+                    <div style="text-align: center; color: white; font-size: 14px;" id="gameTimer">প্রস্তুত</div>
+                </div>
+            </div>
+
+            <div class="balance-section">
+                <div style="color: #666; font-size: 12px; margin-bottom: 5px;">আপনার ব্যালেন্স</div>
+                <div class="balance-amount">৳<span id="userBalance">0</span></div>
+            </div>
+
+            <div>
+                <input type="number" id="betAmount" placeholder="বেট লিখুন (৳)" min="100" value="100">
+                <div class="quick-bets">
+                    <button class="quick-bet-btn" onclick="setBet(100)">100</button>
+                    <button class="quick-bet-btn" onclick="setBet(500)">500</button>
+                    <button class="quick-bet-btn" onclick="setBet(1000)">1000</button>
+                    <button class="quick-bet-btn" onclick="setBet(5000)">5000</button>
+                </div>
+            </div>
+
+            <button id="playBtn" onclick="startGame()">▶️ খেলা শুরু করো!</button>
+            <button id="cashOutBtn" onclick="cashOut()">💰 ক্যাশ আউট!</button>
+
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-label">সম্ভাব্য জয়</div>
+                    <div class="stat-value">৳<span id="potentialWin">0</span></div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">লাস্ট জয়</div>
+                    <div class="stat-value">৳<span id="lastWin">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ডিপোজিট ট্যাব -->
+        <div id="deposit" class="tab-content">
+            <div class="payment-info">
+                <div class="payment-method" id="depositMethod">বিকাশ</div>
+                <div class="payment-number" id="depositNumber">০১৭XXXXXXXX</div>
+                <small style="color: #666;">এই নম্বরে টাকা পাঠান</small>
+            </div>
+
+            <input type="text" id="transactionId" placeholder="ট্রানজেকশন আইডি (TXN ID)" required>
+            <input type="number" id="depositAmount" placeholder="ডিপোজিট পরিমাণ (৳)" min="100" required>
+            <input type="text" id="senderNumber" placeholder="যেই নম্বর থেকে পাঠিয়েছেন" required>
+
+            <button class="deposit-btn" onclick="submitDeposit()">✅ ডিপোজিট জমা দিন</button>
+
+            <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 14px; color: #666;">
+                <strong>নোট:</strong>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>সঠিক টাকার পরিমাণ লিখুন</li>
+                    <li>ট্রানজেকশন ID নিশ্চিত করুন</li>
+                    <li>এডমিন অনুমোদনের পর ব্যালেন্স যুক্ত হবে</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- উইথড্র ট্যাব -->
+        <div id="withdraw" class="tab-content">
+            <div class="balance-section">
+                <div style="color: #666; font-size: 12px; margin-bottom: 5px;">বর্তমান ব্যালেন্স</div>
+                <div class="balance-amount">৳<span id="withdrawBalance">0</span></div>
+            </div>
+
+            <div style="background: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                <label style="color: #666; font-size: 12px; display: block; margin-bottom: 8px;">পেমেন্ট পদ্ধতি নির্বাচন করুন</label>
+                <select id="withdrawMethod" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                    <option value="bkash">বিকাশ</option>
+                    <option value="nagad">নগদ</option>
+                </select>
+            </div>
+
+            <input type="number" id="withdrawAmount" placeholder="উইথড্র পরিমাণ (৳)" min="100" required>
+            <input type="text" id="withdrawNumber" placeholder="আপনার নম্বর (যেখানে টাকা পাবেন)" required>
+
+            <button class="withdraw-btn" onclick="submitWithdraw()">💸 উইথড্র অনুরোধ করুন</button>
+
+            <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 14px; color: #666;">
+                <strong>নোট:</strong>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>ন্যূনতম ৫০০ টাকা উইথড্র করুন</li>
+                    <li>এডমিন অনুমোদনের পর টাকা পাবেন</li>
+                    <li>২-৫ মিনিটের মধ্যে পাবেন</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDrH6u2w3CNkWzz_evgkCm0_3zoow33E0g",
+            authDomain: "avator-e65f9.firebaseapp.com",
+            databaseURL: "https://avator-e65f9-default-rtdb.firebaseio.com",
+            projectId: "avator-e65f9",
+            storageBucket: "avator-e65f9.appspot.com",
+            messagingSenderId: "314656245641",
+            appId: "1:314656245641:web:3ea0c42421b13ac9544358"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let gameState = {
+            userBalance: 0,
+            currentMultiplier: 1.0,
+            gameActive: false,
+            betAmount: 0,
+            multiplierInterval: null,
+            targetMultiplier: 1.5
+        };
+
+        // ব্যালেন্স পড়ুন
+        const balanceRef = ref(db, 'playerBalance');
+        onValue(balanceRef, (snapshot) => {
+            gameState.userBalance = snapshot.val() || 0;
+            updateDisplay();
+        });
+
+        // ক্রাশ মাল্টিপ্লায়ার পড়ুন
+        const crashRef = ref(db, 'crashMultiplier');
+        onValue(crashRef, (snapshot) => {
+            gameState.targetMultiplier = snapshot.val() || 1.5;
+        });
+
+        // ডিপোজিট নম্বর পড়ুন
+        const depositNumberRef = ref(db, 'depositNumber');
+        onValue(depositNumberRef, (snapshot) => {
+            const number = snapshot.val() || '০১৭XXXXXXXX';
+            const method = snapshot.val() ? (snapshot.val().startsWith('013') ? 'নগদ' : 'বিকাশ') : 'বিকাশ';
+            document.getElementById('depositNumber').innerText = number;
+            document.getElementById('depositMethod').innerText = method;
+        });
+
+        function updateDisplay() {
+            document.getElementById('userBalance').innerText = Math.floor(gameState.userBalance);
+            document.getElementById('withdrawBalance').innerText = Math.floor(gameState.userBalance);
+        }
+
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+        };
+
+        window.setBet = function(amount) {
+            if (!gameState.gameActive) {
+                document.getElementById('betAmount').value = amount;
+                updatePotentialWin();
+            }
+        };
+
+        function updatePotentialWin() {
+            const bet = parseFloat(document.getElementById('betAmount').value) || 0;
+            const win = bet * gameState.currentMultiplier;
+            document.getElementById('potentialWin').innerText = Math.floor(win);
+        }
+
+        document.getElementById('betAmount').addEventListener('input', updatePotentialWin);
+
+        window.startGame = function() {
+            if (gameState.gameActive) return;
+
+            const bet = parseFloat(document.getElementById('betAmount').value);
+            if (!bet || bet > gameState.userBalance) {
+                showMessage("সঠিক বেট লিখুন বা যথেষ্ট ব্যালেন্স নেই!", 'error');
+                return;
+            }
+
+            gameState.gameActive = true;
+            gameState.betAmount = bet;
+            gameState.userBalance -= bet;
+            gameState.currentMultiplier = 1.0;
+
+            set(ref(db, 'playerBalance'), gameState.userBalance);
+            updateDisplay();
+
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('cashOutBtn').style.display = 'block';
+            document.getElementById('gameArea').style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+
+            const airplane = document.getElementById('airplane');
+            airplane.classList.remove('crashed');
+            airplane.classList.add('flying');
+
+            let elapsed = 0;
+            gameState.multiplierInterval = setInterval(() => {
+                if (!gameState.gameActive) return;
+
+                elapsed += 100;
+                gameState.currentMultiplier = 1.0 + (elapsed / 3000);
+                document.getElementById('multiplierDisplay').innerText = gameState.currentMultiplier.toFixed(2) + 'x';
+                document.getElementById('gameTimer').innerText = (elapsed / 1000).toFixed(1) + 's';
+
+                if (gameState.currentMultiplier >= gameState.targetMultiplier) {
+                    crashGame();
+                }
+            }, 100);
+
+            showMessage('🎮 গেম শুরু হয়েছে!', 'success');
+        };
+
+        window.cashOut = function() {
+            if (!gameState.gameActive) return;
+
+            gameState.gameActive = false;
+            clearInterval(gameState.multiplierInterval);
+
+            const win = gameState.betAmount * gameState.currentMultiplier;
+            gameState.userBalance += win;
+
+            set(ref(db, 'playerBalance'), gameState.userBalance);
+            updateDisplay();
+
+            document.getElementById('lastWin').innerText = Math.floor(win);
+            showMessage(`🎉 জিতেছ! ৳${Math.floor(win)}`, 'success');
+            resetGame();
+        };
+
+        function crashGame() {
+            gameState.gameActive = false;
+            clearInterval(gameState.multiplierInterval);
+
+            const airplane = document.getElementById('airplane');
+            airplane.classList.remove('flying');
+            airplane.classList.add('crashed');
+
+            document.getElementById('gameArea').style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+            showMessage(`💥 ক্র্যাশ! ${gameState.currentMultiplier.toFixed(2)}x`, 'error');
+
+            set(ref(db, 'playerBalance'), gameState.userBalance);
+            setTimeout(() => resetGame(), 1500);
+        }
+
+        function resetGame() {
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('cashOutBtn').style.display = 'none';
+            document.getElementById('gameArea').style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            document.getElementById('gameTimer').innerText = 'প্রস্তুত';
+            document.getElementById('multiplierDisplay').innerText = '1.00x';
+            document.getElementById('betAmount').value = '';
+            updatePotentialWin();
+        }
+
+        window.submitDeposit = function() {
+            const txnId = document.getElementById('transactionId').value;
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            const senderNumber = document.getElementById('senderNumber').value;
+
+            if (!txnId || !amount || !senderNumber) {
+                showMessage('সব তথ্য পূরণ করুন!', 'error');
+                return;
+            }
+
+            const depositRequest = {
+                type: 'deposit',
+                transactionId: txnId,
+                amount: amount,
+                senderNumber: senderNumber,
+                status: 'pending',
+                timestamp: new Date().toISOString()
+            };
+
+            push(ref(db, 'transactions'), depositRequest);
+            showMessage('✓ ডিপোজিট রিকোয়েস্ট পাঠানো হয়েছে! এডমিন চেক করছে...', 'success');
+
+            document.getElementById('transactionId').value = '';
+            document.getElementById('depositAmount').value = '';
+            document.getElementById('senderNumber').value = '';
+        };
+
+        window.submitWithdraw = function() {
+            const method = document.getElementById('withdrawMethod').value;
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const number = document.getElementById('withdrawNumber').value;
+
+            if (amount < 500) {
+                showMessage('ন্যূনতম ৫০০ টাকা উইথড্র করুন!', 'error');
+                return;
+            }
+
+            if (amount > gameState.userBalance) {
+                showMessage('যথেষ্ট ব্যালেন্স নেই!', 'error');
+                return;
+            }
+
+            if (!number) {
+                showMessage('নম্বর লিখুন!', 'error');
+                return;
+            }
+
+            const withdrawRequest = {
+                type: 'withdraw',
+                method: method,
+                amount: amount,
+                number: number,
+                status: 'pending',
+                timestamp: new Date().toISOString()
+            };
+
+            push(ref(db, 'transactions'), withdrawRequest);
+            showMessage('✓ উইথড্র রিকোয়েস্ট পাঠানো হয়েছে! এডমিন চেক করছে...', 'success');
+
+            document.getElementById('withdrawAmount').value = '';
+            document.getElementById('withdrawNumber').value = '';
+        };
+
+        function showMessage(msg, type) {
+            const el = document.getElementById('message');
+            el.innerText = msg;
+            el.className = `message show ${type}`;
+            setTimeout(() => el.className = 'message', 3000);
+        }
+
+        updateDisplay();
+    </script>
+</body>
+</html>
